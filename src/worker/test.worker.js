@@ -2,7 +2,7 @@
  * @Author: 小石头
  * @Date: 2022-10-26 11:37:10
  * @LastEditors: 小石头
- * @LastEditTime: 2022-11-11 15:35:01
+ * @LastEditTime: 2022-11-17 18:40:38
  * @Description:
  */
 
@@ -17,44 +17,59 @@ async function craeteCollection() {
 
     user = await createCollections('user', "testDB", userScheme);
 
-    self.postMessage({
+    self.postMessage(JSON.stringify({
         type: 'connentResult',
         msg: "工作线程向主线程发送消息",
         value: 'success',
-    });
+    }));
 
 }
 
 async function insert() {
-    user.bulkInsert((new Array(100)).fill().map((_, i) => ({
-        ID: `${i + 1}`,
-        name: 'i + 1',
+    await user.bulkInsert((new Array(100)).fill().map((_, i) => ({
+        id: `${i + 1}`,
+        name: `${i + 1}`,
         age: 20 + i,
         time: moment().subtract(i, 'd').valueOf(),
-        timeString: moment().subtract(i, 'd').format("YYYY-MM-DD hh:mm:ss")
-    })))
+        timeString: moment().subtract(i, 'd').format("YYYY-MM-DD hh:mm:ss"),
+        middleSchool: {
+            grade: i + 1
+        }
+    })));
+
+    await user.insert({
+        id: '101',
+        name: '',
+        age: 10086,
+        middleSchool: {}
+    })
 }
 
-async function search() {
-    const queryTime = moment().subtract(50, 'd').valueOf();
-    const queryTimeString = moment().subtract(30, 'd').format("YYYY-MM-DD hh:mm:ss");
-
-    const timeArr = await user.find({
+async function search({sort}) {
+    const RxData = await user.find({
         selector: {
-            timeString: {
-                $gt: queryTimeString,
-                $exists: true,
+            name: {
+                $regex: '.*1.*'
             }
-        }
+        },
+        sort: [
+            {
+                'middleSchool.grade': sort
+            }
+        ],
     }).exec();
 
-    const time = timeArr.map(item => item.get('timeString'))
+    const data = []
 
-    self.postMessage({
+    RxData.forEach(item => {
+        data.push(item.toJSON());
+    })
+
+    self.postMessage(JSON.stringify({
         type: 'searchResult',
         msg: "工作线程向主线程发送消息",
-        value: time.sort((a, b) => b - a),
-    });
+        value: data,
+    }));
 }
 
 
@@ -62,13 +77,16 @@ async function search() {
 self.onmessage = function (event) {
     console.log("work event: ", event);
 
-    const { type } = event.data;
+    const { type, sort } = event.data;
     switch(type) {
         case 'connect':
             craeteCollection();
             break;
         case 'search':
-            search();
+            search({sort});
+            break;
+        case 'insert':
+            insert();
             break;
     }
 };

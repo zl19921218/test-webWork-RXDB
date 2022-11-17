@@ -2,10 +2,10 @@ export const userScheme = {
     title: "user collection",
     version: 0,
     description: "用户表",
-    primaryKey: "ID",
+    primaryKey: "id",
     type: "object",
     properties: {
-        ID: {
+        id: {
             type: "string",
         },
         name: {
@@ -24,6 +24,13 @@ export const userScheme = {
         },
         timeString: {
             type: 'string',
+        },
+        middleSchool: {
+            type: 'object',
+            properties: {
+                grade: 'number',
+            }
         }
     },
+    indexes: ['age']
 };

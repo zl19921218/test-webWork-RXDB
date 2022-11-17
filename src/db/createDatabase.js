@@ -1,9 +1,11 @@
 
-import { createRxDatabase } from "rxdb";
-
+import { createRxDatabase, addRxPlugin } from "rxdb";
+import { RxDBJsonDumpPlugin } from 'rxdb/plugins/json-dump';
 import { getRxStorageDexie } from 'rxdb/plugins/dexie';
 
 const database = {};
+
+addRxPlugin(RxDBJsonDumpPlugin);
 
 async function createDB(name = 'testDB') {
     database[name] = await createRxDatabase({
